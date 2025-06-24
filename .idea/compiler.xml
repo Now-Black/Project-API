@@ -7,10 +7,12 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="APIU" />
+        <module name="easyjava" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="APIU" target="1.8" />
+      <module name="easyjava" target="1.5" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
