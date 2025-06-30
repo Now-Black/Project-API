@@ -31,7 +31,7 @@ public class AccountController extends ABaseController{
     private EmailCodeService emailCodeService;
 
     /*加载验证码，设置响应头，保存验证码code至session，推送至客户端*/
-    @GlobalInterceptor(checkAdmin = true)
+    @GlobalInterceptor(checklogin = true)
     @RequestMapping("/checkCode")
     public void checkCode(HttpServletResponse httpServletResponse, HttpSession session,Integer type)
             throws IOException{
