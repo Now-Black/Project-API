@@ -3,6 +3,7 @@ package com.APIU.controller;
 import java.io.IOException;
 import java.util.List;
 
+import com.APIU.annotation.GlobalInterceptor;
 import com.APIU.entity.constants.Constants;
 import com.APIU.entity.dto.CreateImageCode;
 import com.APIU.entity.query.UserInfoQuery;
@@ -30,6 +31,7 @@ public class AccountController extends ABaseController{
     private EmailCodeService emailCodeService;
 
     /*加载验证码，设置响应头，保存验证码code至session，推送至客户端*/
+    @GlobalInterceptor(checkAdmin = true)
     @RequestMapping("/checkCode")
     public void checkCode(HttpServletResponse httpServletResponse, HttpSession session,Integer type)
             throws IOException{
