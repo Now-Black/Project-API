@@ -4,7 +4,6 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/APIU/APIU.iml" filepath="$PROJECT_DIR$/APIU/APIU.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/APIUse.iml" filepath="$PROJECT_DIR$/.idea/APIUse.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../codeflashger/easyJava/easyjava/easyjava.iml" filepath="$PROJECT_DIR$/../codeflashger/easyJava/easyjava/easyjava.iml" />
     </modules>
   </component>
 </project>

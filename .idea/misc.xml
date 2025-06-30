@@ -4,7 +4,6 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/APIU/pom.xml" />
-        <option value="$PROJECT_DIR$/../codeflashger/easyJava/easyjava/pom.xml" />
       </list>
     </option>
   </component>
