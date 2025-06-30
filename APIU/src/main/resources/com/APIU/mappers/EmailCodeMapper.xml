@@ -249,4 +249,10 @@
 		select <include refid="base_column_list" /> from email_code e where email=#{email} and code=#{code}
 	</select>
 
+	<update id="disableEmailCode">
+			update email_code
+			set status = 1
+			where email = #{email}
+			and status = 0
+	</update>
 </mapper>

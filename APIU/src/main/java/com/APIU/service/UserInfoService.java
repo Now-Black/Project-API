@@ -122,5 +122,5 @@ public interface UserInfoService {
 	 * 根据QqOpenId删除
 	 */
 	Integer deleteUserInfoByQqOpenId(String qqOpenId);
-
+	void register(String email , String nickName , String password , String emailCode);
 }

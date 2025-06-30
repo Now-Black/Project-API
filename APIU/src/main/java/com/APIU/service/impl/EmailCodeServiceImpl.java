@@ -1,9 +1,23 @@
 package com.APIU.service.impl;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
 
+import com.APIU.component.RedisComponent;
+import com.APIU.entity.config.AppConfig;
+import com.APIU.entity.constants.Constants;
+import com.APIU.entity.dto.SysSettingsDto;
+import com.APIU.entity.po.UserInfo;
+import com.APIU.entity.query.UserInfoQuery;
+import com.APIU.exception.BusinessException;
+import com.APIU.mappers.UserInfoMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import com.APIU.entity.enums.PageSize;
@@ -14,6 +28,7 @@ import com.APIU.entity.query.SimplePage;
 import com.APIU.mappers.EmailCodeMapper;
 import com.APIU.service.EmailCodeService;
 import com.APIU.utils.StringTools;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -21,10 +36,17 @@ import com.APIU.utils.StringTools;
  */
 @Service("emailCodeService")
 public class EmailCodeServiceImpl implements EmailCodeService {
-
+	@Resource
+	private AppConfig appConfig;
+	@Resource
+	private UserInfoMapper<UserInfo, UserInfoQuery> userInfoMapper;
+	@Resource
+	private RedisComponent redisComponent;
 	@Resource
 	private EmailCodeMapper<EmailCode, EmailCodeQuery> emailCodeMapper;
 
+	@Resource
+	private JavaMailSender javaMailSender;
 	/**
 	 * 根据条件查询列表
 	 */
@@ -126,5 +148,44 @@ public class EmailCodeServiceImpl implements EmailCodeService {
 	@Override
 	public Integer deleteEmailCodeByEmailAndCode(String email, String code) {
 		return this.emailCodeMapper.deleteByEmailAndCode(email, code);
+	}
+
+	private void sendEmailCode(String email, String code){
+		MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+		try {
+			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,true);
+			helper.setFrom(appConfig.getSendUserName());
+			helper.setTo(email);
+			SysSettingsDto sysSettingsDto = redisComponent.getSysSettingsDto();
+			helper.setSubject(sysSettingsDto.getRegisterEmailTitle());
+			helper.setText(sysSettingsDto.getRegisterEmailContent(),code);
+			helper.setSentDate(new Date());
+			javaMailSender.send(mimeMessage);
+		} catch (MessagingException e) {
+			e.printStackTrace();
+			throw new BusinessException("邮箱发生失败");
+		}
+
+	}
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void sendEmailCode(String email , Integer type){
+		if(type.equals(Constants.ZERO)){
+			UserInfo userInfo =   userInfoMapper.selectByEmail(email);
+			if(userInfo != null){
+				throw new BusinessException("邮箱已存在");
+			}
+		}
+		String code = StringTools.getRandomNumber(5);
+
+		sendEmailCode(email,code);
+		emailCodeMapper.disableEmailCode(email);
+		EmailCode emailCode = new EmailCode();
+		emailCode.setEmail(email);
+		emailCode.setCode(code);
+		emailCode.setCreateTime(new Date());
+		emailCode.setStatus(Constants.ZERO);
+
+		emailCodeMapper.insert(emailCode);
 	}
 }

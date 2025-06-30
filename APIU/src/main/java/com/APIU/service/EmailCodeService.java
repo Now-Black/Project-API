@@ -68,5 +68,5 @@ public interface EmailCodeService {
 	 * 根据EmailAndCode删除
 	 */
 	Integer deleteEmailCodeByEmailAndCode(String email,String code);
-
+	void sendEmailCode(String email , Integer type);
 }

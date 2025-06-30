@@ -199,4 +199,11 @@ public class UserInfoServiceImpl implements UserInfoService {
 	public Integer deleteUserInfoByQqOpenId(String qqOpenId) {
 		return this.userInfoMapper.deleteByQqOpenId(qqOpenId);
 	}
+	@Override
+	public void register(String email , String nickName , String password , String emailCode){
+
+
+
+	}
+
 }
