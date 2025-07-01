@@ -8,6 +8,7 @@ import com.APIU.annotation.GlobalInterceptor;
 import com.APIU.annotation.VerifyParam;
 import com.APIU.entity.constants.Constants;
 import com.APIU.entity.dto.CreateImageCode;
+import com.APIU.entity.dto.SessionWebUserDto;
 import com.APIU.entity.enums.VerifyRegexEnum;
 import com.APIU.entity.query.UserInfoQuery;
 import com.APIU.entity.po.UserInfo;
@@ -90,11 +91,33 @@ public class AccountController extends ABaseController{
                             @VerifyParam(required = true) String password,
                             @VerifyParam(required = true) String code,
                             HttpSession session){
-        if(! session.getAttribute(Constants.CHECK_CODE_KEY).equals(code)){
-            throw new BusinessException("验证码输入错误");
+        try {
+            if(! session.getAttribute(Constants.CHECK_CODE_KEY).equals(code)){
+                throw new BusinessException("验证码输入错误");
+            }
+            SessionWebUserDto sessionWebUserDto = userInfoService.login(email,password);
+            session.setAttribute(Constants.SESSION_KEY,sessionWebUserDto);
+            return getSuccessResponseVO(sessionWebUserDto);
+        }finally {
+            session.removeAttribute(Constants.CHECK_CODE_KEY);
         }
-
-
-
     }
+    @RequestMapping("/resetPwd")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVO resetPwd(@VerifyParam(required = true,regex = VerifyRegexEnum.EMAIL) String email,
+                               @VerifyParam(required = true) String password,
+                               @VerifyParam(required = true) String checkCode,
+                               @VerifyParam(required = true) String emailCode,
+                               HttpSession session){
+        try {
+            if(! session.getAttribute(Constants.CHECK_CODE_KEY).equals(checkCode)){
+                throw new BusinessException("验证码输入错误");
+            }
+            userInfoService.resetpassword(email,password,emailCode);
+            return getSuccessResponseVO(null);
+        }finally {
+            session.removeAttribute(Constants.CHECK_CODE_KEY);
+        }
+    }
+
 }
