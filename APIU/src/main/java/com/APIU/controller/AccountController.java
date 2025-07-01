@@ -2,6 +2,7 @@ package com.APIU.controller;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 import com.APIU.annotation.GlobalInterceptor;
 import com.APIU.annotation.VerifyParam;
@@ -81,5 +82,19 @@ public class AccountController extends ABaseController{
         }finally {
             session.removeAttribute(Constants.CHECK_CODE_KEY);
         }
+    }
+
+    @RequestMapping("/login")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVO login(@VerifyParam(required = true) String email,
+                            @VerifyParam(required = true) String password,
+                            @VerifyParam(required = true) String code,
+                            HttpSession session){
+        if(! session.getAttribute(Constants.CHECK_CODE_KEY).equals(code)){
+            throw new BusinessException("验证码输入错误");
+        }
+
+
+
     }
 }
