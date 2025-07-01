@@ -188,4 +188,18 @@ public class EmailCodeServiceImpl implements EmailCodeService {
 
 		emailCodeMapper.insert(emailCode);
 	}
+
+	@Override
+	public void checkEmailCode(String email,String emailcode){
+		EmailCode emailcodec =  emailCodeMapper.selectByEmailAndCode(email,emailcode);
+		if(emailcodec == null ){
+			throw new BusinessException("验证码输入错误");
+		}
+		if(!emailcodec.getStatus().equals(Constants.ONE)||
+				System.currentTimeMillis() - emailcodec.getCreateTime().getTime() > Constants.LENGTH_10 *1000 * 60){
+			throw new BusinessException("验证码已失效");
+		}
+
+	}
+
 }

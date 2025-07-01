@@ -1,9 +1,20 @@
 package com.APIU.service.impl;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.APIU.component.RedisComponent;
+import com.APIU.entity.constants.Constants;
+import com.APIU.entity.dto.SysSettingsDto;
+import com.APIU.entity.dto.UserSpaceDto;
+import com.APIU.entity.enums.UserStatusEnum;
+import com.APIU.entity.po.EmailCode;
+import com.APIU.entity.query.EmailCodeQuery;
+import com.APIU.exception.BusinessException;
+import com.APIU.mappers.EmailCodeMapper;
+import com.APIU.service.EmailCodeService;
 import org.springframework.stereotype.Service;
 
 import com.APIU.entity.enums.PageSize;
@@ -14,6 +25,7 @@ import com.APIU.entity.query.SimplePage;
 import com.APIU.mappers.UserInfoMapper;
 import com.APIU.service.UserInfoService;
 import com.APIU.utils.StringTools;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -21,10 +33,14 @@ import com.APIU.utils.StringTools;
  */
 @Service("userInfoService")
 public class UserInfoServiceImpl implements UserInfoService {
-
+	@Resource
+	private EmailCodeMapper<EmailCode, EmailCodeQuery> emailCodeMapper;
 	@Resource
 	private UserInfoMapper<UserInfo, UserInfoQuery> userInfoMapper;
-
+	@Resource
+	private EmailCodeService emailCodeService;
+	@Resource
+	private RedisComponent redisComponent;
 	/**
 	 * 根据条件查询列表
 	 */
@@ -199,11 +215,32 @@ public class UserInfoServiceImpl implements UserInfoService {
 	public Integer deleteUserInfoByQqOpenId(String qqOpenId) {
 		return this.userInfoMapper.deleteByQqOpenId(qqOpenId);
 	}
+
+
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public void register(String email , String nickName , String password , String emailCode){
-
-
-
+		UserInfo userInfo = userInfoMapper.selectByEmail(email);
+		if(userInfo != null){
+			throw new BusinessException("邮箱已存在");
+		}
+		userInfo =  userInfoMapper.selectByNickName(nickName);
+		if(userInfo != null){
+			throw new BusinessException("用户名已存在");
+		}
+		emailCodeService.checkEmailCode(email,emailCode);
+		String userid = StringTools.getRandomNumber(Constants.LENGTH_10);
+		userInfo = new UserInfo();
+		userInfo.setEmail(email);
+		userInfo.setNickName(nickName);
+		userInfo.setStatus(UserStatusEnum.ENABLE.getStatus());
+		userInfo.setJoinTime(new Date());
+		userInfo.setPassword(StringTools.encodeByMD5(password));
+		userInfo.setUserId(userid);
+		SysSettingsDto sysSettingsDto = redisComponent.getSysSettingsDto();
+		userInfo.setTotalSpace(sysSettingsDto.getUserInitUseSpace() * Constants.MB);
+		userInfo.setUseSpace(0L);
+		userInfoMapper.insert(userInfo);
 	}
 
 }

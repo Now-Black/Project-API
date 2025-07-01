@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.util.List;
 
 import com.APIU.annotation.GlobalInterceptor;
+import com.APIU.annotation.VerifyParam;
 import com.APIU.entity.constants.Constants;
 import com.APIU.entity.dto.CreateImageCode;
+import com.APIU.entity.enums.VerifyRegexEnum;
 import com.APIU.entity.query.UserInfoQuery;
 import com.APIU.entity.po.UserInfo;
 import com.APIU.entity.vo.ResponseVO;
@@ -29,9 +31,10 @@ import javax.servlet.http.HttpSession;
 public class AccountController extends ABaseController{
     @Resource
     private EmailCodeService emailCodeService;
-
+    @Resource
+    private UserInfoService userInfoService;
     /*加载验证码，设置响应头，保存验证码code至session，推送至客户端*/
-    @GlobalInterceptor(checklogin = true)
+    @GlobalInterceptor(checklogin = false)
     @RequestMapping("/checkCode")
     public void checkCode(HttpServletResponse httpServletResponse, HttpSession session,Integer type)
             throws IOException{
@@ -62,20 +65,21 @@ public class AccountController extends ABaseController{
     }
 
     @RequestMapping("/register")
-    public ResponseVO register(String email,String nickName,String password,String checkCode,String emailCode,
-                                HttpSession session){
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVO register(@VerifyParam(required = true,regex = VerifyRegexEnum.EMAIL) String email,
+                               @VerifyParam(required = true,max = 10,min = 0) String nickName,
+                               @VerifyParam(required = true,max = 10,min = 0)String password,
+                               @VerifyParam(required = true,max = 10,min = 0)String checkCode,
+                               @VerifyParam(required = true,max = 10,min = 0)String emailCode,
+                               HttpSession session){
         try {
             if(! checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))){
-
+                throw new BusinessException("验证码输入错误");
             }
-
-
+            userInfoService.register(email,nickName,password,emailCode);
+            return getSuccessResponseVO(null);
         }finally {
-
+            session.removeAttribute(Constants.CHECK_CODE_KEY);
         }
-
-
-
-    return getSuccessResponseVO(null);
     }
 }

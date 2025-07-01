@@ -1,5 +1,6 @@
 package com.APIU.utils;
 import com.APIU.exception.BusinessException;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.lang.reflect.Field;
@@ -7,7 +8,9 @@ import java.lang.reflect.Method;
 
 
 public class StringTools {
-
+    public static String encodeByMD5(String originString) {
+        return StringTools.isEmpty(originString) ? null : DigestUtils.md5Hex(originString);
+    }
     public static void checkParam(Object param) {
         try {
             Field[] fields = param.getClass().getDeclaredFields();
