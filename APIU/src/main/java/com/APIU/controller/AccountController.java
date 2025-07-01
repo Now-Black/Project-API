@@ -1,11 +1,14 @@
 package com.APIU.controller;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Random;
 
 import com.APIU.annotation.GlobalInterceptor;
 import com.APIU.annotation.VerifyParam;
+import com.APIU.entity.config.AppConfig;
 import com.APIU.entity.constants.Constants;
 import com.APIU.entity.dto.CreateImageCode;
 import com.APIU.entity.dto.SessionWebUserDto;
@@ -17,6 +20,8 @@ import com.APIU.exception.BusinessException;
 import com.APIU.service.EmailCodeService;
 import com.APIU.service.UserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +36,10 @@ import javax.servlet.http.HttpSession;
  */
 @RestController("userInfoController")
 public class AccountController extends ABaseController{
+    private static final String CONTENT_TYPE = "Content-Type";
+    private static final String CONTENT_TYPE_VALUE = "application/json;charset=UTF-8";
+    @Resource
+    private AppConfig appConfig;
     @Resource
     private EmailCodeService emailCodeService;
     @Resource
@@ -119,5 +128,38 @@ public class AccountController extends ABaseController{
             session.removeAttribute(Constants.CHECK_CODE_KEY);
         }
     }
+    @RequestMapping("/getAvatar/{userId}")
+    public void getAvatar(HttpServletResponse response, @PathVariable String userId){
+        String avatarname = Constants.FILE_FOLDER_FILE + Constants.FILE_FOLDER_AVATAR_NAME;
+        File folder = new File(appConfig.getProjectFolder() + avatarname);
+        if(!folder.exists()){
+            folder.mkdirs();
+        }
+        String avatarnamepath = appConfig.getProjectFolder() + avatarname + userId + Constants.AVATAR_SUFFIX;
+        File file = new File(avatarnamepath);
+        if(!file.exists()){
+            if(!new File(appConfig.getProjectFolder()+avatarname+Constants.AVATAR_DEFUALT).exists()){
+                pringtnodefaultavatar(response);
+                return;
+            }
+            avatarnamepath = appConfig.getProjectFolder() + avatarname + Constants.AVATAR_DEFUALT;
+        }
+        response.setContentType("image/jpg");
+        readFile(response,avatarnamepath);
+    }
+
+    private void pringtnodefaultavatar(HttpServletResponse response){
+        response.setHeader(CONTENT_TYPE,CONTENT_TYPE_VALUE);
+        response.setStatus(HttpStatus.OK.value());
+        PrintWriter writer = null;
+        try {
+            writer = response.getWriter();
+            writer.print("请在头像目录下放置默认头像default_avatar.jpg");
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }
