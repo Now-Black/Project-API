@@ -1,7 +1,9 @@
 package com.APIU.service.impl;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Date;
 import java.util.List;
 
@@ -20,8 +22,11 @@ import com.APIU.entity.query.UserInfoQuery;
 import com.APIU.exception.BusinessException;
 import com.APIU.mappers.UserInfoMapper;
 import com.APIU.utils.DateUtil;
+import com.APIU.utils.ProcessUtils;
 import org.apache.commons.io.FileUtils;
 import org.aspectj.util.FileUtil;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.APIU.entity.query.FileInfoQuery;
@@ -42,6 +47,9 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Service("fileInfoService")
 public class FileInfoServiceImpl implements FileInfoService {
+	@Resource
+	@Lazy
+	private FileInfoServiceImpl fileInfoService;
 	@Resource
 	private AppConfig appConfig;
 	@Resource
@@ -234,20 +242,16 @@ public class FileInfoServiceImpl implements FileInfoService {
 		fileInfo.setStatus(FileStatusEnums.TRANSFER.getStatus());
 		fileInfo.setFolderType(FileFolderTypeEnums.FILE.getType());
 		fileInfo.setDelFlag(FileDelFlagEnums.USING.getFlag());
-
 		fileInfoMapper.insert(fileInfo);
-
 		Long spacenew = redisComponent.getFileTempSize(webUserDto.getUserId(),fileId);
 		updateUserSpace(webUserDto.getUserId(), spacenew);
-
 		resultDto.setStatus(UploadStatusEnums.UPLOAD_FINISH.getCode());
 		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
 			@Override
 			public void afterCommit() {
-
+				fileInfoService.transferfile(fileInfo.getFileId(),webUserDto.getUserId());
 			}
 		});
-
 		return resultDto;
 		}catch (IOException e) {
 			successupload = false;
@@ -263,6 +267,119 @@ public class FileInfoServiceImpl implements FileInfoService {
 
 
 		}
+
+	}
+	@Async
+	public void transferfile(String fileid , String userid){
+		FileInfo fileInfo = fileInfoMapper.selectByFileIdAndUserId(fileid,userid);
+		if(fileInfo == null || !fileInfo.getStatus().equals(FileStatusEnums.TRANSFER.getStatus())){
+			return;
+		}
+		String filetemp = appConfig.getProjectFolder() + Constants.FILE_FOLDER_TEMP;
+		String tarfile = userid + fileid;
+
+		File filetempo = new File(filetemp+tarfile);
+		if(!filetempo.exists()){
+			filetempo.mkdirs();
+		}
+		String suffix = StringTools.getFileSuffix(fileInfo.getFileName());
+		String month = DateUtil.format(fileInfo.getCreateTime(),DateTimePatternEnum.YYYYMM.getPattern());
+
+		String realfile = appConfig.getProjectFolder() + Constants.FILE_FOLDER_FILE;
+		File tarfileser = new File(realfile + "/" +month);
+		if(!tarfileser.exists()){
+			tarfileser.mkdirs();
+		}
+		String tarfilename = tarfile + suffix;
+		String tarfilepath = tarfileser.getPath() +"/" + tarfilename;
+		union(filetempo.getPath(),tarfilepath,fileInfo.getFileName(),true);
+		FileTypeEnums fileTypeEnums = FileTypeEnums.getFileTypeBySuffix(suffix);
+		if(fileTypeEnums == FileTypeEnums.VIDEO){
+			cutFile4Video(userid,tarfilepath);
+			//生成视频缩略图，使用ffmpeg
+		}else if(fileTypeEnums == FileTypeEnums.IMAGE){
+			//生成图片缩略图，使用ffmpeg
+		}
+		FileInfo updatefileInfo = new FileInfo();
+		updatefileInfo.setFileSize(new File(tarfilepath).length());
+		updatefileInfo.setStatus(FileStatusEnums.USING.getStatus());
+		fileInfoMapper.updateFileStatusWithOldStatus(fileid,userid,updatefileInfo,FileStatusEnums.TRANSFER.getStatus());
+
+	}
+	private void cutFile4Video(String fileId, String videoFilePath) {
+		//创建同名切片目录
+		File tsFolder = new File(videoFilePath.substring(0, videoFilePath.lastIndexOf(".")));
+		if (!tsFolder.exists()) {
+			tsFolder.mkdirs();
+		}
+
+		final String CMD_GET_CODE = "ffprobe -v error -select_streams v:0 -show_entries stream=codec_name %s";
+		String cmd = String.format(CMD_GET_CODE, videoFilePath);
+		String result = ProcessUtils.executeCommand(cmd, false);
+		result = result.replace("\n", "");
+		result = result.substring(result.indexOf("=") + 1);
+		String codec = result.substring(0, result.indexOf("["));
+
+		//转码
+		if ("hevc".equals(codec)) {
+			String newFileName = videoFilePath.substring(0, videoFilePath.lastIndexOf(".")) + "_" + videoFilePath.substring(videoFilePath.lastIndexOf("."));
+			new File(videoFilePath).renameTo(new File(newFileName));
+			String CMD_HEVC_264 = "ffmpeg -i %s -c:v libx264 -crf 20 %s";
+			cmd = String.format(CMD_HEVC_264, newFileName, videoFilePath);
+			ProcessUtils.executeCommand(cmd, false);
+			new File(newFileName).delete();
+		}
+
+		final String CMD_TRANSFER_2TS = "ffmpeg -y -i %s  -vcodec copy -acodec copy -bsf:v h264_mp4toannexb %s";
+		final String CMD_CUT_TS = "ffmpeg -i %s -c copy -map 0 -f segment -segment_list %s -segment_time 30 %s/%s_%%4d.ts";
+
+		String tsPath = tsFolder + "/" + Constants.TS_NAME;
+		//生成.ts
+		cmd = String.format(CMD_TRANSFER_2TS, videoFilePath, tsPath);
+		ProcessUtils.executeCommand(cmd, false);
+		//生成索引文件.m3u8 和切片.ts
+		cmd = String.format(CMD_CUT_TS, tsPath, tsFolder.getPath() + "/" + Constants.M3U8_NAME, tsFolder.getPath(), fileId);
+		ProcessUtils.executeCommand(cmd, false);
+		//删除index.ts
+		new File(tsPath).delete();
+	}
+	private void union(String fileori , String filepath , String filename , boolean delsource){
+		File fileoi = new File(fileori);
+		if(!fileoi.exists()){
+			throw new BusinessException("目录不存在");
+		}
+		File filelist[] = fileoi.listFiles();
+		File tar = new File(filepath);
+		try {
+			RandomAccessFile write = new RandomAccessFile(tar,"rw");
+			byte[] b = new byte[1024 * 10];
+			for(int i = 0 ; i < filelist.length ; i++) {
+				try {
+					int len = -1;
+					File filechunk = new File(fileori + File.separator + i);
+					RandomAccessFile read = new RandomAccessFile(filechunk, "r");
+					while ((len = read.read(b)) != -1) {
+						write.write(b, 0, len);
+					}
+				} finally {
+					write.close();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new BusinessException("合并文件失败");
+		}finally {
+			if(delsource){
+				if(fileoi.exists()){
+					try {
+						FileUtils.deleteDirectory(fileoi);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+
 
 	}
 	private void updateUserSpace(String userid,Long filesize){
