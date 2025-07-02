@@ -1,4 +1,5 @@
 package com.APIU.utils;
+import com.APIU.entity.constants.Constants;
 import com.APIU.exception.BusinessException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -8,6 +9,31 @@ import java.lang.reflect.Method;
 
 
 public class StringTools {
+    public static String rename(String fileName) {
+        String fileNameReal = getFileNameNoSuffix(fileName);
+        String suffix = getFileSuffix(fileName);
+        return fileNameReal + "_" + getRandomString(Constants.LENGTH_5) + suffix;
+    }
+    public static String getFileNameNoSuffix(String fileName) {
+        Integer index = fileName.lastIndexOf(".");
+        if (index == -1) {
+            return fileName;
+        }
+        fileName = fileName.substring(0, index);
+        return fileName;
+    }
+    public static String getFileSuffix(String fileName) {
+        Integer index = fileName.lastIndexOf(".");
+        if (index == -1) {
+            return "";
+        }
+        String suffix = fileName.substring(index);
+        return suffix;
+    }
+    public static final String getRandomString(Integer count) {
+        return RandomStringUtils.random(count, true, true);
+    }
+
     public static boolean pathIsOk(String path) {
         if (StringTools.isEmpty(path)) {
             return true;

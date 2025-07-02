@@ -6,14 +6,18 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import com.APIU.component.RedisComponent;
+import com.APIU.component.RedisUtils;
 import com.APIU.entity.constants.Constants;
 import com.APIU.entity.dto.SessionWebUserDto;
 import com.APIU.entity.dto.UploadResultDto;
 import com.APIU.entity.dto.UserSpaceDto;
-import com.APIU.entity.enums.FileDelFlagEnums;
+import com.APIU.entity.enums.*;
+import com.APIU.entity.po.UserInfo;
+import com.APIU.entity.query.UserInfoQuery;
+import com.APIU.exception.BusinessException;
+import com.APIU.mappers.UserInfoMapper;
 import org.springframework.stereotype.Service;
 
-import com.APIU.entity.enums.PageSize;
 import com.APIU.entity.query.FileInfoQuery;
 import com.APIU.entity.po.FileInfo;
 import com.APIU.entity.vo.PaginationResultVO;
@@ -31,7 +35,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Service("fileInfoService")
 public class FileInfoServiceImpl implements FileInfoService {
 	@Resource
+	private UserInfoMapper<UserInfo, UserInfoQuery> userInfoMapper;
+	@Resource
 	private RedisComponent redisComponent;
+	@Resource
+	private RedisUtils redisUtils;
 	@Resource
 	private FileInfoMapper<FileInfo, FileInfoQuery> fileInfoMapper;
 
@@ -155,18 +163,47 @@ public class FileInfoServiceImpl implements FileInfoService {
 			List<FileInfo> list =  fileInfoMapper.selectList(query);
 			if(!list.isEmpty()){
 				FileInfo fileInfo = list.get(0);
+				if(fileInfo.getFileSize() + spaceDto.getUseSpace() > spaceDto.getTotalSpace())
+				{
+					throw new BusinessException(ResponseCodeEnum.CODE_904);
+				}
 				fileInfo.setFileId(fileId);
 				fileInfo.setFileMd5(fileMd5);
 				fileInfo.setCreateTime(date);
 				fileInfo.setLastUpdateTime(date);
 				fileInfo.setFilePid(filePid);
-				fileInfo.setStatus();
+				fileInfo.setStatus(FileStatusEnums.USING.getStatus());
 				fileInfo.setDelFlag(FileDelFlagEnums.USING.getFlag());
 				fileInfo.setUserId(webUserDto.getUserId());
-
+				fileInfo.setFileName(Refilename(fileName,filePid,webUserDto.getUserId()));
+				fileInfoMapper.insert(fileInfo);
+				resultDto.setStatus(UploadStatusEnums.UPLOAD_SECONDS.getCode());
+				updateUserSpace(webUserDto.getUserId(),fileInfo.getFileSize());
 			}
 		}
 
+
+	}
+	private void updateUserSpace(String userid,Long filesize){
+		Integer count = userInfoMapper.updateUserSpace(userid,filesize,null);
+		if(count==0){
+			throw new BusinessException(ResponseCodeEnum.CODE_904);
+		}
+		UserSpaceDto userSpaceDto = redisComponent.getUserSpaveDto(userid);
+		userSpaceDto.setUseSpace(userSpaceDto.getUseSpace()+filesize);
+		redisUtils.setex(Constants.REDIS_KEY_USER_SPACE_USE+userid,userSpaceDto,Constants.REDIS_KEY_EXPIRES_DAY);
+	}
+	private String Refilename(String filename,String filepid,String userid){
+		FileInfoQuery query = new FileInfoQuery();
+		query.setFilePid(filepid);
+		query.setUserId(userid);
+		query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+		query.setFileName(filename);
+		Integer count = fileInfoMapper.selectCount(query);
+		if(count > 0){
+			filename = StringTools.rename(filename);
+		}
+		return filename;
 
 	}
 }
