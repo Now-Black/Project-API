@@ -280,7 +280,7 @@ public class UserInfoServiceImpl implements UserInfoService {
 		UserSpaceDto userSpaceDto = new UserSpaceDto();
 		userSpaceDto.setUseSpace(fileInfoMapper.selectUseSpace(userInfo.getUserId()));
 		userSpaceDto.setTotalSpace(userInfo.getTotalSpace());
-		redisUtils.set(Constants.REDIS_KEY_USER_SPACE_USE,userSpaceDto);
+		redisUtils.setex(Constants.REDIS_KEY_USER_SPACE_USE + userInfo.getUserId(),userSpaceDto,Constants.REDIS_KEY_EXPIRES_DAY);
 		return sessionWebUserDto;
 	}
 
