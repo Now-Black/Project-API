@@ -632,5 +632,22 @@
 	<select id="selectByQqOpenId" resultMap="base_result_map" >
 		select <include refid="base_column_list" /> from user_info u where qq_open_id=#{qqOpenId}
 	</select>
-
+	<update id="updateUserSpace">
+		update user_info
+		<set>
+			<if test="useSpace != null">
+				use_space = use_space + #{useSpace},
+			</if>
+			<if test="totalSpace != null">
+				total_space = total_space + #{totalSpace},
+			</if>
+		</set>
+		where user_id = #{userId}
+		<if test="useSpace != null">
+			<![CDATA[ and (use_space + #{useSpace}) <= total_space ]]>
+		</if>
+		<if test="totalSpace != null">
+			<![CDATA[ and (total_space + #{totalSpace}) >= use_space ]]>
+		</if>
+	</update>
 </mapper>

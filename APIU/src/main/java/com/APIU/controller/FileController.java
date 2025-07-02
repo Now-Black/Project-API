@@ -48,4 +48,5 @@ public class FileController extends ABaseController{
                 fileName,file,filePid,fileMd5,chunkIndex,chunks);
         return getSuccessResponseVO(uploadResultDto);
     }
+
 }
