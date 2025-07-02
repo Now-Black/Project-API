@@ -4,6 +4,12 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.APIU.component.RedisComponent;
+import com.APIU.entity.constants.Constants;
+import com.APIU.entity.dto.SessionWebUserDto;
+import com.APIU.entity.dto.UploadResultDto;
+import com.APIU.entity.dto.UserSpaceDto;
+import com.APIU.entity.enums.FileDelFlagEnums;
 import org.springframework.stereotype.Service;
 
 import com.APIU.entity.enums.PageSize;
@@ -14,6 +20,8 @@ import com.APIU.entity.query.SimplePage;
 import com.APIU.mappers.FileInfoMapper;
 import com.APIU.service.FileInfoService;
 import com.APIU.utils.StringTools;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 
 /**
@@ -21,7 +29,8 @@ import com.APIU.utils.StringTools;
  */
 @Service("fileInfoService")
 public class FileInfoServiceImpl implements FileInfoService {
-
+	@Resource
+	private RedisComponent redisComponent;
 	@Resource
 	private FileInfoMapper<FileInfo, FileInfoQuery> fileInfoMapper;
 
@@ -111,7 +120,6 @@ public class FileInfoServiceImpl implements FileInfoService {
 	public FileInfo getFileInfoByFileIdAndUserId(String fileId, String userId) {
 		return this.fileInfoMapper.selectByFileIdAndUserId(fileId, userId);
 	}
-
 	/**
 	 * 根据FileIdAndUserId修改
 	 */
@@ -119,12 +127,35 @@ public class FileInfoServiceImpl implements FileInfoService {
 	public Integer updateFileInfoByFileIdAndUserId(FileInfo bean, String fileId, String userId) {
 		return this.fileInfoMapper.updateByFileIdAndUserId(bean, fileId, userId);
 	}
-
 	/**
 	 * 根据FileIdAndUserId删除
 	 */
 	@Override
 	public Integer deleteFileInfoByFileIdAndUserId(String fileId, String userId) {
 		return this.fileInfoMapper.deleteByFileIdAndUserId(fileId, userId);
+	}
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public UploadResultDto uploadFile(SessionWebUserDto webUserDto, String fileId, String fileName,
+							   MultipartFile file, String filePid, String fileMd5,
+							   String chunkIndex, String chunks){
+		UploadResultDto resultDto = new UploadResultDto();
+		if(StringTools.isEmpty(fileId)){
+			fileId = StringTools.getRandomNumber(10);
+		}
+		resultDto.setFileId(fileId);
+		UserSpaceDto spaceDto = redisComponent.getUserSpaveDto(webUserDto.getUserId());
+		if(chunkIndex.equals(Constants.ZERO_STR)){
+			FileInfoQuery query = new FileInfoQuery();
+			query.setFileMd5(fileMd5);
+			query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+			query.setSimplePage(new SimplePage(0,1));
+			List<FileInfo> list =  fileInfoMapper.selectList(query);
+			if(!list.isEmpty()){
+
+			}
+		}
+
+
 	}
 }

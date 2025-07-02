@@ -17,19 +17,27 @@ import javax.annotation.Resource;
 
 @Component("redisComponent")
 public class RedisComponent {
-
+    @Resource
+    private FileInfoMapper<FileInfo,FileInfoQuery> fileInfoMapper;
     @Resource
     private RedisUtils redisUtils;
 
     @Resource
     private UserInfoMapper<UserInfo, UserInfoQuery> userInfoMapper;
 
-    @Resource
-    private FileInfoMapper<FileInfo, FileInfoQuery> fileInfoMapper;
 
 
 
-
+    public UserSpaceDto getUserSpaveDto(String userid){
+        UserSpaceDto userSpaceDto = (UserSpaceDto)redisUtils.get(Constants.REDIS_KEY_USER_SPACE_USE+userid);
+        if(userSpaceDto==null){
+            userSpaceDto = new UserSpaceDto();
+            userSpaceDto.setTotalSpace(getSysSettingsDto().getUserInitUseSpace()*Constants.MB);
+            userSpaceDto.setUseSpace(fileInfoMapper.selectUseSpace(userid));
+            redisUtils.setex(Constants.REDIS_KEY_USER_SPACE_USE+userid,userSpaceDto,Constants.REDIS_KEY_EXPIRES_DAY);
+        }
+        return userSpaceDto;
+    }
     /**
      * 获取系统设置
      *
