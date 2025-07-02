@@ -195,7 +195,7 @@ public class EmailCodeServiceImpl implements EmailCodeService {
 		if(emailcodec == null ){
 			throw new BusinessException("验证码输入错误");
 		}
-		if(!emailcodec.getStatus().equals(Constants.ONE)||
+		if(!emailcodec.getStatus().equals(Constants.ZERO)||
 				System.currentTimeMillis() - emailcodec.getCreateTime().getTime() > Constants.LENGTH_10 *1000 * 60){
 			throw new BusinessException("验证码已失效");
 		}

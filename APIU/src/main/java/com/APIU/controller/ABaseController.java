@@ -1,7 +1,9 @@
 package com.APIU.controller;
 import com.APIU.entity.enums.ResponseCodeEnum;
+import com.APIU.entity.vo.PaginationResultVO;
 import com.APIU.entity.vo.ResponseVO;
 import com.APIU.exception.BusinessException;
+import com.APIU.utils.CopyTools;
 import com.APIU.utils.StringTools;
 
 import javax.servlet.http.HttpServletResponse;
@@ -82,6 +84,16 @@ public class ABaseController {
         }
 
 
+    }
+    protected <S,T> PaginationResultVO<T> convertoresultvo(PaginationResultVO<S> paginationResultVO,
+                                                           Class<T> classz){
+        PaginationResultVO<T> resultVO = new PaginationResultVO();
+        resultVO.setList(CopyTools.copyList(paginationResultVO.getList(), classz));
+        resultVO.setPageNo(paginationResultVO.getPageNo());
+        resultVO.setPageSize(paginationResultVO.getPageSize());
+        resultVO.setPageTotal(paginationResultVO.getPageTotal());
+        resultVO.setTotalCount(paginationResultVO.getTotalCount());
+        return resultVO;
     }
 
 }

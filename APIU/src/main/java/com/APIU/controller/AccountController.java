@@ -74,7 +74,7 @@ public class AccountController extends ABaseController{
     @RequestMapping("/sendEmailCode")
     public ResponseVO sendEmailCode(String email,String checkCode,Integer type,HttpSession session){
         try {
-            if(session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL) != checkCode){
+            if(!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL))){
                 throw new BusinessException("图片验证码错误");
             }
             emailCodeService.sendEmailCode(email,type);

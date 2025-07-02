@@ -7,7 +7,10 @@ import com.APIU.entity.constants.Constants;
 import com.APIU.entity.dto.SessionWebUserDto;
 import com.APIU.entity.enums.ResponseCodeEnum;
 import com.APIU.entity.po.EmailCode;
+import com.APIU.entity.po.UserInfo;
+import com.APIU.entity.query.UserInfoQuery;
 import com.APIU.exception.BusinessException;
+import com.APIU.service.UserInfoService;
 import com.APIU.utils.StringTools;
 import com.APIU.utils.VerifyUtils;
 import org.aspectj.lang.JoinPoint;
@@ -25,6 +28,7 @@ import javax.servlet.http.HttpSession;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.List;
 
 @Aspect
 @Component("globalOperationAspect")
@@ -61,14 +65,23 @@ public class GlobalOperationAspect {
 
     }
 
-
+    @Resource
+    private UserInfoService userInfoService;
     private void checklogin(Boolean checkAdmin){
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         HttpSession session =  request.getSession();
         SessionWebUserDto sessionWebUserDto = (SessionWebUserDto)session.getAttribute(Constants.SESSION_KEY);
-        /*if(sessionWebUserDto ==null && appConfig.getDev()!=null && !appConfig.getDev()){
-            开发环境下自动登录
-        }*/
+        if (sessionWebUserDto == null && appConfig.getDev() != null && appConfig.getDev()) {
+            List<UserInfo> userInfoList = userInfoService.findListByParam(new UserInfoQuery());
+            if (!userInfoList.isEmpty()) {
+                UserInfo userInfo = userInfoList.get(0);
+                sessionWebUserDto = new SessionWebUserDto();
+                sessionWebUserDto.setUserId(userInfo.getUserId());
+                sessionWebUserDto.setNickName(userInfo.getNickName());
+                sessionWebUserDto.setAdmin(true);
+                session.setAttribute(Constants.SESSION_KEY, sessionWebUserDto);
+            }
+        }
         if(sessionWebUserDto == null){
             throw new BusinessException(ResponseCodeEnum.CODE_901);
         }
