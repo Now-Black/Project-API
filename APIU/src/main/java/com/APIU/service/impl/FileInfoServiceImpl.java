@@ -1,5 +1,7 @@
 package com.APIU.service.impl;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
@@ -7,6 +9,7 @@ import javax.annotation.Resource;
 
 import com.APIU.component.RedisComponent;
 import com.APIU.component.RedisUtils;
+import com.APIU.entity.config.AppConfig;
 import com.APIU.entity.constants.Constants;
 import com.APIU.entity.dto.SessionWebUserDto;
 import com.APIU.entity.dto.UploadResultDto;
@@ -16,6 +19,9 @@ import com.APIU.entity.po.UserInfo;
 import com.APIU.entity.query.UserInfoQuery;
 import com.APIU.exception.BusinessException;
 import com.APIU.mappers.UserInfoMapper;
+import com.APIU.utils.DateUtil;
+import org.apache.commons.io.FileUtils;
+import org.aspectj.util.FileUtil;
 import org.springframework.stereotype.Service;
 
 import com.APIU.entity.query.FileInfoQuery;
@@ -26,6 +32,8 @@ import com.APIU.mappers.FileInfoMapper;
 import com.APIU.service.FileInfoService;
 import com.APIU.utils.StringTools;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 
@@ -34,6 +42,8 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Service("fileInfoService")
 public class FileInfoServiceImpl implements FileInfoService {
+	@Resource
+	private AppConfig appConfig;
 	@Resource
 	private UserInfoMapper<UserInfo, UserInfoQuery> userInfoMapper;
 	@Resource
@@ -147,7 +157,11 @@ public class FileInfoServiceImpl implements FileInfoService {
 	@Transactional(rollbackFor = Exception.class)
 	public UploadResultDto uploadFile(SessionWebUserDto webUserDto, String fileId, String fileName,
 							   MultipartFile file, String filePid, String fileMd5,
-							   String chunkIndex, String chunks){
+							   Integer chunkIndex, Integer chunks){
+		boolean successupload = true;
+		File filetemp = null;
+		try {
+
 		UploadResultDto resultDto = new UploadResultDto();
 		if(StringTools.isEmpty(fileId)){
 			fileId = StringTools.getRandomNumber(10);
@@ -155,7 +169,7 @@ public class FileInfoServiceImpl implements FileInfoService {
 		resultDto.setFileId(fileId);
 		UserSpaceDto spaceDto = redisComponent.getUserSpaveDto(webUserDto.getUserId());
 		Date date = new Date();
-		if(chunkIndex.equals(Constants.ZERO_STR)){
+		if(chunkIndex.equals(Constants.ZERO)){
 			FileInfoQuery query = new FileInfoQuery();
 			query.setFileMd5(fileMd5);
 			query.setDelFlag(FileDelFlagEnums.USING.getFlag());
@@ -179,9 +193,76 @@ public class FileInfoServiceImpl implements FileInfoService {
 				fileInfoMapper.insert(fileInfo);
 				resultDto.setStatus(UploadStatusEnums.UPLOAD_SECONDS.getCode());
 				updateUserSpace(webUserDto.getUserId(),fileInfo.getFileSize());
+				return resultDto;
 			}
 		}
+		String filetempfold = appConfig.getProjectFolder() + Constants.FILE_FOLDER_TEMP;
+		String filetemptar = webUserDto.getUserId() + fileId;
+		filetemp = new File(filetempfold + filetemptar);
+		if(filetemp.exists()){
+			filetemp.mkdirs();
+		}
+		Long filesizetemp = redisComponent.getFileTempSize(webUserDto.getUserId(),fileId);
+		if(filesizetemp + file.getSize() + spaceDto.getUseSpace() > spaceDto.getTotalSpace()){
+			throw new BusinessException(ResponseCodeEnum.CODE_904);
+		}
+		File newfile = new File(filetemp.getPath() + "/" + chunkIndex);
+		 file.transferTo(newfile);
 
+		redisComponent.saveFileTempSize(webUserDto.getUserId(),fileId,file.getSize());
+		if(chunkIndex < chunks - 1){
+			resultDto.setStatus(UploadStatusEnums.UPLOADING.getCode());
+			return resultDto;
+		}
+		String month = DateUtil.format(date,DateTimePatternEnum.YYYYMM.getPattern());
+		String suffix = StringTools.getFileSuffix(fileName);
+
+		String filerealname = filetemptar + suffix;
+		FileTypeEnums fileTypeEnums = FileTypeEnums.getFileTypeBySuffix(suffix);
+		String filename= Refilename(fileName,filePid,webUserDto.getUserId());
+		FileInfo fileInfo = new FileInfo();
+		fileInfo.setFileId(fileId);
+		fileInfo.setUserId(webUserDto.getUserId());
+		fileInfo.setFileMd5(fileMd5);
+		fileInfo.setFileName(filename);
+		fileInfo.setFilePath(month + "/" + filerealname);
+		fileInfo.setFilePid(filePid);
+		fileInfo.setCreateTime(date);
+		fileInfo.setLastUpdateTime(date);
+		fileInfo.setFileCategory(fileTypeEnums.getCategory().getCategory());
+		fileInfo.setFileType(fileTypeEnums.getType());
+		fileInfo.setStatus(FileStatusEnums.TRANSFER.getStatus());
+		fileInfo.setFolderType(FileFolderTypeEnums.FILE.getType());
+		fileInfo.setDelFlag(FileDelFlagEnums.USING.getFlag());
+
+		fileInfoMapper.insert(fileInfo);
+
+		Long spacenew = redisComponent.getFileTempSize(webUserDto.getUserId(),fileId);
+		updateUserSpace(webUserDto.getUserId(), spacenew);
+
+		resultDto.setStatus(UploadStatusEnums.UPLOAD_FINISH.getCode());
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+
+			}
+		});
+
+		return resultDto;
+		}catch (IOException e) {
+			successupload = false;
+			throw new BusinessException("文件上传失败");
+		}finally {
+			if(!successupload && filetemp!=null){
+				try {
+					FileUtils.deleteDirectory(filetemp);
+				} catch (IOException e) {
+					throw new BusinessException("临时目录删除失败");
+				}
+			}
+
+
+		}
 
 	}
 	private void updateUserSpace(String userid,Long filesize){

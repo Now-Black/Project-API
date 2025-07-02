@@ -42,7 +42,7 @@ public class FileController extends ABaseController{
     @GlobalInterceptor(checklogin = true)
     public ResponseVO uploadFile(HttpSession session, String fileId, String fileName,
                                  MultipartFile file,String filePid, String fileMd5,
-                                 String chunkIndex,String chunks){
+                                 Integer chunkIndex,Integer chunks){
         SessionWebUserDto sessionWebUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
         UploadResultDto uploadResultDto = fileInfoService.uploadFile(sessionWebUserDto,fileId,
                 fileName,file,filePid,fileMd5,chunkIndex,chunks);

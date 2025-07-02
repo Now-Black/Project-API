@@ -73,5 +73,6 @@ public interface FileInfoService {
 	Integer deleteFileInfoByFileIdAndUserId(String fileId,String userId);
 	UploadResultDto uploadFile(SessionWebUserDto webUserDto, String fileId, String fileName,
 							   MultipartFile file, String filePid, String fileMd5,
-							   String chunkIndex, String chunks);
+							   Integer chunkIndex, Integer chunks);
+
 }
