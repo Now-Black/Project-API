@@ -1,5 +1,6 @@
 package com.APIU.service.impl;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -145,6 +146,7 @@ public class FileInfoServiceImpl implements FileInfoService {
 		}
 		resultDto.setFileId(fileId);
 		UserSpaceDto spaceDto = redisComponent.getUserSpaveDto(webUserDto.getUserId());
+		Date date = new Date();
 		if(chunkIndex.equals(Constants.ZERO_STR)){
 			FileInfoQuery query = new FileInfoQuery();
 			query.setFileMd5(fileMd5);
@@ -152,6 +154,15 @@ public class FileInfoServiceImpl implements FileInfoService {
 			query.setSimplePage(new SimplePage(0,1));
 			List<FileInfo> list =  fileInfoMapper.selectList(query);
 			if(!list.isEmpty()){
+				FileInfo fileInfo = list.get(0);
+				fileInfo.setFileId(fileId);
+				fileInfo.setFileMd5(fileMd5);
+				fileInfo.setCreateTime(date);
+				fileInfo.setLastUpdateTime(date);
+				fileInfo.setFilePid(filePid);
+				fileInfo.setStatus();
+				fileInfo.setDelFlag(FileDelFlagEnums.USING.getFlag());
+				fileInfo.setUserId(webUserDto.getUserId());
 
 			}
 		}
