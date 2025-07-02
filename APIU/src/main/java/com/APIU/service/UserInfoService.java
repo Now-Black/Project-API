@@ -2,9 +2,12 @@ package com.APIU.service;
 
 import java.util.List;
 
+import com.APIU.entity.dto.SessionWebUserDto;
 import com.APIU.entity.query.UserInfoQuery;
 import com.APIU.entity.po.UserInfo;
 import com.APIU.entity.vo.PaginationResultVO;
+
+import javax.servlet.http.HttpSession;
 
 
 /**
@@ -123,4 +126,6 @@ public interface UserInfoService {
 	 */
 	Integer deleteUserInfoByQqOpenId(String qqOpenId);
 	void register(String email , String nickName , String password , String emailCode);
+	SessionWebUserDto login(String email, String password);
+	void resetpassword(String email,String password,String emailCode);
 }

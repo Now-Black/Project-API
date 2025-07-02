@@ -4,17 +4,25 @@ import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpSession;
 
 import com.APIU.component.RedisComponent;
+import com.APIU.component.RedisUtils;
+import com.APIU.entity.config.AppConfig;
 import com.APIU.entity.constants.Constants;
+import com.APIU.entity.dto.SessionWebUserDto;
 import com.APIU.entity.dto.SysSettingsDto;
 import com.APIU.entity.dto.UserSpaceDto;
 import com.APIU.entity.enums.UserStatusEnum;
 import com.APIU.entity.po.EmailCode;
+import com.APIU.entity.po.FileInfo;
 import com.APIU.entity.query.EmailCodeQuery;
+import com.APIU.entity.query.FileInfoQuery;
 import com.APIU.exception.BusinessException;
 import com.APIU.mappers.EmailCodeMapper;
+import com.APIU.mappers.FileInfoMapper;
 import com.APIU.service.EmailCodeService;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
 
 import com.APIU.entity.enums.PageSize;
@@ -28,11 +36,17 @@ import com.APIU.utils.StringTools;
 import org.springframework.transaction.annotation.Transactional;
 
 
+
 /**
  * 用户信息 业务接口实现
  */
 @Service("userInfoService")
 public class UserInfoServiceImpl implements UserInfoService {
+	@Resource
+	private FileInfoMapper<FileInfo, FileInfoQuery> fileInfoMapper;
+	@Resource
+	private RedisUtils redisUtils;
+
 	@Resource
 	private EmailCodeMapper<EmailCode, EmailCodeQuery> emailCodeMapper;
 	@Resource
@@ -41,6 +55,8 @@ public class UserInfoServiceImpl implements UserInfoService {
 	private EmailCodeService emailCodeService;
 	@Resource
 	private RedisComponent redisComponent;
+	@Resource
+	private AppConfig appConfig;
 	/**
 	 * 根据条件查询列表
 	 */
@@ -241,6 +257,44 @@ public class UserInfoServiceImpl implements UserInfoService {
 		userInfo.setTotalSpace(sysSettingsDto.getUserInitUseSpace() * Constants.MB);
 		userInfo.setUseSpace(0L);
 		userInfoMapper.insert(userInfo);
+	}
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public SessionWebUserDto login(String email, String password){
+		UserInfo userInfo = userInfoMapper.selectByEmail(email);
+		if(userInfo == null){
+			throw new BusinessException("用户不存在");
+		}
+		if(!userInfo.getPassword().equals(StringTools.encodeByMD5(password))){
+			throw new BusinessException("密码输入错误");
+		}
+		if(userInfo.getStatus().equals(UserStatusEnum.DISABLE.getStatus())){
+			throw new BusinessException("账号已禁用");
+		}
+		userInfo.setLastLoginTime(new Date());
+		userInfoMapper.updateByEmail(userInfo,email);
+		SessionWebUserDto sessionWebUserDto = new SessionWebUserDto();
+		sessionWebUserDto.setNickName(userInfo.getNickName());
+		sessionWebUserDto.setUserId(userInfo.getUserId());
+		sessionWebUserDto.setAdmin(ArrayUtils.contains(appConfig.getAdminEmails().split(","), email));
+		UserSpaceDto userSpaceDto = new UserSpaceDto();
+		userSpaceDto.setUseSpace(fileInfoMapper.selectUseSpace(userInfo.getUserId()));
+		userSpaceDto.setTotalSpace(userInfo.getTotalSpace());
+		redisUtils.set(Constants.REDIS_KEY_USER_SPACE_USE,userSpaceDto);
+		return sessionWebUserDto;
+	}
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void resetpassword(String email,String password,String emailCode){
+		emailCodeService.checkEmailCode(email,emailCode);
+		UserInfo userInfo = userInfoMapper.selectByEmail(email);
+		if(userInfo==null || userInfo.getStatus().equals(UserStatusEnum.DISABLE.getStatus())){
+			throw new BusinessException("账号不存在或已被禁用");
+		}
+		UserInfo updateInfo = new UserInfo();
+		updateInfo.setPassword(StringTools.encodeByMD5(password));
+		userInfoMapper.updateByEmail(updateInfo,email);
 	}
 
 }

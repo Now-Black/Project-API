@@ -8,6 +8,15 @@ import java.lang.reflect.Method;
 
 
 public class StringTools {
+    public static boolean pathIsOk(String path) {
+        if (StringTools.isEmpty(path)) {
+            return true;
+        }
+        if (path.contains("../") || path.contains("..\\")) {
+            return false;
+        }
+        return true;
+    }
     public static String encodeByMD5(String originString) {
         return StringTools.isEmpty(originString) ? null : DigestUtils.md5Hex(originString);
     }

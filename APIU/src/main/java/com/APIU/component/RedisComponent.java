@@ -28,14 +28,7 @@ public class RedisComponent {
     private FileInfoMapper<FileInfo, FileInfoQuery> fileInfoMapper;
 
 
-//    public UserSpaceDto getUserSpaveDto(){
-//        UserSpaceDto userSpaceDto = (UserSpaceDto)redisUtils.get(Constants.REDIS_KEY_USER_SPACE_USE);
-//        if(userSpaceDto == null){
-//            userSpaceDto = new UserSpaceDto();
-//            redisUtils.set(Constants.REDIS_KEY_USER_SPACE_USE,userSpaceDto);
-//        }
-//        return userSpaceDto;
-//    }
+
 
     /**
      * 获取系统设置
