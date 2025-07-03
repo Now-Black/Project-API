@@ -2,6 +2,7 @@ package com.APIU.controller;
 
 
 import com.APIU.annotation.GlobalInterceptor;
+import com.APIU.entity.config.AppConfig;
 import com.APIU.entity.constants.Constants;
 import com.APIU.entity.dto.SessionWebUserDto;
 import com.APIU.entity.dto.UploadResultDto;
@@ -13,16 +14,24 @@ import com.APIU.entity.vo.FileInfoVO;
 import com.APIU.entity.vo.PaginationResultVO;
 import com.APIU.entity.vo.ResponseVO;
 import com.APIU.service.FileInfoService;
+import com.APIU.utils.StringTools;
+import io.netty.util.internal.StringUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 @RestController("fileInfoController")
 @RequestMapping("/file")
-public class FileController extends ABaseController{
+public class FileController extends CommonfileController{
+    @Resource
+    private AppConfig appConfig;
     @Resource
     private FileInfoService fileInfoService;
     @RequestMapping("/loadDataList")
@@ -47,6 +56,22 @@ public class FileController extends ABaseController{
         UploadResultDto uploadResultDto = fileInfoService.uploadFile(sessionWebUserDto,fileId,
                 fileName,file,filePid,fileMd5,chunkIndex,chunks);
         return getSuccessResponseVO(uploadResultDto);
+    }
+    @RequestMapping("/getImage/{imageFolder}/{imageName}")
+    public void getImage(HttpServletResponse  response,
+                         @PathVariable String imageFolder, @PathVariable String imageName){
+        readimage(response,imageFolder,imageName);
+    }
+    @RequestMapping("/ts/getVideoInfo/{fileId}")
+    public void getVideInfo(HttpServletResponse response,@PathVariable String fileid ,
+                            HttpSession session){
+       SessionWebUserDto sessionWebUserDto = (SessionWebUserDto)session.getAttribute(Constants.SESSION_KEY);
+       getfile(response,fileid, sessionWebUserDto.getUserId());
+    }
+    @RequestMapping("/getFile/{fileId}")
+    public void getFile(@PathVariable String fileid , HttpSession session,HttpServletResponse response){
+        SessionWebUserDto sessionWebUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
+        getfile(response,fileid,sessionWebUserDto.getUserId());
     }
 
 
