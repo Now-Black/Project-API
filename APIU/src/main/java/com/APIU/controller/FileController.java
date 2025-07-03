@@ -2,6 +2,7 @@ package com.APIU.controller;
 
 
 import com.APIU.annotation.GlobalInterceptor;
+import com.APIU.annotation.VerifyParam;
 import com.APIU.entity.config.AppConfig;
 import com.APIU.entity.constants.Constants;
 import com.APIU.entity.dto.SessionWebUserDto;
@@ -26,6 +27,7 @@ import javax.annotation.Resource;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.PushBuilder;
 
 @RestController("fileInfoController")
 @RequestMapping("/file")
@@ -73,6 +75,14 @@ public class FileController extends CommonfileController{
         SessionWebUserDto sessionWebUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
         getfile(response,fileid,sessionWebUserDto.getUserId());
     }
+    @RequestMapping("/newFoloder")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVO newFoloder(HttpSession session,
+                                 @VerifyParam(required = true) String filePid ,
+                                 @VerifyParam(required = true) String fileName){
+        SessionWebUserDto sessionWebUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
+        FileInfo fileInfo = fileInfoService.
 
+    }
 
 }

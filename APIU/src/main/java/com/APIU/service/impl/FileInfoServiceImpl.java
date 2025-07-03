@@ -402,6 +402,23 @@ public class FileInfoServiceImpl implements FileInfoService {
 			filename = StringTools.rename(filename);
 		}
 		return filename;
+	}
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public FileInfo newfolder(String userid , String foldername , String filepid){
+
+
 
 	}
+	private void checkfilename(String userid , String foldername , String filepid,Integer filetype ){
+		FileInfoQuery query = new FileInfoQuery();
+		query.setUserId(userid);
+		query.setFilePid(filepid);
+		query.setFileName(foldername);
+		query.setFolderType(filetype);
+
+
+	}
+
 }

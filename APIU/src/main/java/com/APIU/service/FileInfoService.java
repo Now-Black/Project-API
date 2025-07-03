@@ -74,5 +74,5 @@ public interface FileInfoService {
 	UploadResultDto uploadFile(SessionWebUserDto webUserDto, String fileId, String fileName,
 							   MultipartFile file, String filePid, String fileMd5,
 							   Integer chunkIndex, Integer chunks);
-
+	FileInfo newfolder(String userid , String foldername , String filepid);
 }
