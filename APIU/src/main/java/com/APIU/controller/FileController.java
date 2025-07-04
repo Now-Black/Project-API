@@ -115,4 +115,11 @@ public class FileController extends CommonfileController{
         List<FileInfo> list = fileInfoService.findListByParam(query);
         return getSuccessResponseVO(CopyTools.copyList(list,FileInfoVO.class));
     }
+    @RequestMapping("changeFileFolder")
+    public ResponseVO changeFileFolder(HttpSession session,String fileIds, String filePid){
+
+
+
+
+    }
 }
