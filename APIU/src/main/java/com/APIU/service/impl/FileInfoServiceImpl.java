@@ -407,8 +407,21 @@ public class FileInfoServiceImpl implements FileInfoService {
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public FileInfo newfolder(String userid , String foldername , String filepid){
+		checkfilename(userid,foldername,filepid,FileFolderTypeEnums.FOLDER.getType());
+		Date date = new Date();
 
+		FileInfo fileInfo = new FileInfo();
+		fileInfo.setCreateTime(date);
+		fileInfo.setLastUpdateTime(date);
+		fileInfo.setStatus(FileStatusEnums.USING.getStatus());
+		fileInfo.setFileId(StringTools.getRandomNumber(5));
+		fileInfo.setFilePid(filepid);
+		fileInfo.setUserId(userid);
+		fileInfo.setFileName(foldername);
+		fileInfo.setDelFlag(FileDelFlagEnums.USING.getFlag());
+		fileInfoMapper.insert(fileInfo);
 
+		return fileInfo;
 
 	}
 	private void checkfilename(String userid , String foldername , String filepid,Integer filetype ){
@@ -417,8 +430,9 @@ public class FileInfoServiceImpl implements FileInfoService {
 		query.setFilePid(filepid);
 		query.setFileName(foldername);
 		query.setFolderType(filetype);
-
-
+		query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+		Integer count =  fileInfoService.findCountByParam(query);
+		if(count > 0)throw new BusinessException("存在同名文件");
 	}
 
 }

@@ -116,6 +116,11 @@ public class FileInfoQuery extends BaseParam {
 	private Integer delFlag;
 
 
+	private String[] fileidArray;
+
+	public void setFileidArray(String[] fileidArray){
+		fileidArray = fileidArray;
+	}
 	public void setFileId(String fileId){
 		this.fileId = fileId;
 	}

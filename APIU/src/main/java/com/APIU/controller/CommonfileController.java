@@ -2,13 +2,13 @@ package com.APIU.controller;
 
 import com.APIU.entity.config.AppConfig;
 import com.APIU.entity.constants.Constants;
-import com.APIU.entity.enums.FileCategoryEnums;
-import com.APIU.entity.enums.FileDelFlagEnums;
-import com.APIU.entity.enums.FileStatusEnums;
-import com.APIU.entity.enums.FileTypeEnums;
+import com.APIU.entity.enums.*;
 import com.APIU.entity.po.FileInfo;
 import com.APIU.entity.query.FileInfoQuery;
+import com.APIU.entity.vo.FileInfoVO;
+import com.APIU.entity.vo.ResponseVO;
 import com.APIU.service.FileInfoService;
+import com.APIU.utils.CopyTools;
 import com.APIU.utils.StringTools;
 import org.apache.commons.lang3.StringUtils;
 
@@ -84,4 +84,18 @@ public class CommonfileController extends ABaseController{
         }
         readFile(response,file.getPath());
     }
+    ResponseVO getfildorinfo(String userid,String path){
+        String[] filepath = path.split("/");
+        FileInfoQuery query = new FileInfoQuery();
+        query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+        query.setFolderType(FileFolderTypeEnums.FOLDER.getType());
+        query.setUserId(userid);
+        query.setFileidArray(filepath);
+        List<FileInfo> fileInfo = fileInfoService.findListByParam(query);
+        return getSuccessResponseVO(CopyTools.copyList(fileInfo, FileInfoVO.class));
+
+
+    }
+
 }
+

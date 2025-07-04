@@ -18,6 +18,7 @@ import com.APIU.service.FileInfoService;
 import com.APIU.utils.StringTools;
 import io.netty.util.internal.StringUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tomcat.util.bcel.Const;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -81,8 +82,14 @@ public class FileController extends CommonfileController{
                                  @VerifyParam(required = true) String filePid ,
                                  @VerifyParam(required = true) String fileName){
         SessionWebUserDto sessionWebUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
-        FileInfo fileInfo = fileInfoService.
-
+        FileInfo fileInfo = fileInfoService.newfolder(sessionWebUserDto.getUserId(),fileName,filePid);
+        return getSuccessResponseVO(fileInfo);
     }
+    @RequestMapping("/getFolderInfo")
+    public ResponseVO getFolderInfo(HttpSession session,String path){
+        SessionWebUserDto webUserDto = (SessionWebUserDto)session.getAttribute(Constants.SESSION_KEY);
+        return getfildorinfo(webUserDto.getUserId(),path);
+    }
+
 
 }
