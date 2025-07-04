@@ -15,6 +15,7 @@ import com.APIU.entity.vo.FileInfoVO;
 import com.APIU.entity.vo.PaginationResultVO;
 import com.APIU.entity.vo.ResponseVO;
 import com.APIU.service.FileInfoService;
+import com.APIU.utils.CopyTools;
 import com.APIU.utils.StringTools;
 import io.netty.util.internal.StringUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -90,6 +91,10 @@ public class FileController extends CommonfileController{
         SessionWebUserDto webUserDto = (SessionWebUserDto)session.getAttribute(Constants.SESSION_KEY);
         return getfildorinfo(webUserDto.getUserId(),path);
     }
-
-
+    @RequestMapping("/rename")
+    public ResponseVO rename(HttpSession session, String filename , String fileid){
+        SessionWebUserDto sessionWebUserDto =(SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
+        FileInfo fileInfo = fileInfoService.rename(sessionWebUserDto.getUserId(),filename,fileid);
+        return getSuccessResponseVO(CopyTools.copy(fileInfo,FileInfoVO.class));
+    }
 }

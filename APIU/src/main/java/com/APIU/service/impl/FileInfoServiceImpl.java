@@ -424,15 +424,38 @@ public class FileInfoServiceImpl implements FileInfoService {
 		return fileInfo;
 
 	}
-	private void checkfilename(String userid , String foldername , String filepid,Integer filetype ){
+	private void checkfilename(String userid , String foldername , String filepid,Integer folderType ){
 		FileInfoQuery query = new FileInfoQuery();
 		query.setUserId(userid);
 		query.setFilePid(filepid);
 		query.setFileName(foldername);
-		query.setFolderType(filetype);
+		query.setFolderType(folderType);
 		query.setDelFlag(FileDelFlagEnums.USING.getFlag());
 		Integer count =  fileInfoService.findCountByParam(query);
 		if(count > 0)throw new BusinessException("存在同名文件");
 	}
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public FileInfo rename(String userid,String filename,String fileId){
+		FileInfo fileInfo = fileInfoService.getFileInfoByFileIdAndUserId(fileId,userid);
+		if(fileInfo == null){
+			throw new BusinessException(ResponseCodeEnum.CODE_404);
+		}
+		if(fileInfo.getFileName().equals(filename)){
+			return fileInfo;
+		}
+		checkfilename(userid,filename,fileInfo.getFilePid(),fileInfo.getFolderType());
+		filename = filename + StringTools.getFileNameNoSuffix(fileInfo.getFileName());
+
+		FileInfo dbinsert = new FileInfo();
+		Date date = new Date();
+		dbinsert.setLastUpdateTime(date);
+		dbinsert.setFileName(filename);
+		fileInfoMapper.updateByFileIdAndUserId(dbinsert,fileId,userid);
+		fileInfo.setFileName(filename);
+		fileInfo.setLastUpdateTime(date);
+		return fileInfo;
+	}
+
 
 }

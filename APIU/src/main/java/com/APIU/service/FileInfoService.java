@@ -75,4 +75,5 @@ public interface FileInfoService {
 							   MultipartFile file, String filePid, String fileMd5,
 							   Integer chunkIndex, Integer chunks);
 	FileInfo newfolder(String userid , String foldername , String filepid);
+	FileInfo rename(String userid,String filename,String fileId);
 }
