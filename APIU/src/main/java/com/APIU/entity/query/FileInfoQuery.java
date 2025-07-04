@@ -117,6 +117,10 @@ public class FileInfoQuery extends BaseParam {
 
 
 	private String[] fileidArray;
+	private String[] exculdefileidArray;
+	public void setExculdefileidArray(String[] exculdefileidArray){
+		exculdefileidArray = exculdefileidArray;
+	}
 
 	public void setFileidArray(String[] fileidArray){
 		fileidArray = fileidArray;

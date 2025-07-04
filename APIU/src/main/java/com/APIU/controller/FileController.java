@@ -9,6 +9,7 @@ import com.APIU.entity.dto.SessionWebUserDto;
 import com.APIU.entity.dto.UploadResultDto;
 import com.APIU.entity.enums.FileCategoryEnums;
 import com.APIU.entity.enums.FileDelFlagEnums;
+import com.APIU.entity.enums.FileFolderTypeEnums;
 import com.APIU.entity.po.FileInfo;
 import com.APIU.entity.query.FileInfoQuery;
 import com.APIU.entity.vo.FileInfoVO;
@@ -30,6 +31,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.PushBuilder;
+import java.util.List;
 
 @RestController("fileInfoController")
 @RequestMapping("/file")
@@ -96,5 +98,21 @@ public class FileController extends CommonfileController{
         SessionWebUserDto sessionWebUserDto =(SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
         FileInfo fileInfo = fileInfoService.rename(sessionWebUserDto.getUserId(),filename,fileid);
         return getSuccessResponseVO(CopyTools.copy(fileInfo,FileInfoVO.class));
+    }
+    @RequestMapping("loadAllFolder")
+    public ResponseVO loadAllFolder(HttpSession session,String fileid , String filepid){
+        SessionWebUserDto webUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
+        FileInfoQuery query = new FileInfoQuery();
+        query.setUserId(webUserDto.getUserId());
+        query.setFolderType(FileFolderTypeEnums.FOLDER.getType());
+        query.setFilePid(filepid);
+        if(!StringTools.isEmpty(fileid)){
+            String[] strings = fileid.split(",");
+            query.setExculdefileidArray(strings);
+        }
+        query.setOrderBy("create_time desc");
+        query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+        List<FileInfo> list = fileInfoService.findListByParam(query);
+        return getSuccessResponseVO(CopyTools.copyList(list,FileInfoVO.class));
     }
 }
