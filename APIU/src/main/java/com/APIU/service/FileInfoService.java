@@ -7,6 +7,7 @@ import com.APIU.entity.dto.UploadResultDto;
 import com.APIU.entity.query.FileInfoQuery;
 import com.APIU.entity.po.FileInfo;
 import com.APIU.entity.vo.PaginationResultVO;
+import com.APIU.entity.vo.ResponseVO;
 import org.springframework.web.multipart.MultipartFile;
 
 
@@ -77,4 +78,5 @@ public interface FileInfoService {
 	FileInfo newfolder(String userid , String foldername , String filepid);
 	FileInfo rename(String userid,String filename,String fileId);
 	void changeFileFolder(String fileids , String filepid, String userid);
+	ResponseVO delFile(String userid,String fileid);
 }

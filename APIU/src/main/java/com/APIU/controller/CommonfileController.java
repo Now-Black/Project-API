@@ -1,20 +1,27 @@
 package com.APIU.controller;
 
+import com.APIU.component.RedisUtils;
 import com.APIU.entity.config.AppConfig;
 import com.APIU.entity.constants.Constants;
+import com.APIU.entity.dto.DownloadFileDto;
 import com.APIU.entity.enums.*;
 import com.APIU.entity.po.FileInfo;
 import com.APIU.entity.query.FileInfoQuery;
 import com.APIU.entity.vo.FileInfoVO;
 import com.APIU.entity.vo.ResponseVO;
+import com.APIU.exception.BusinessException;
 import com.APIU.service.FileInfoService;
 import com.APIU.utils.CopyTools;
 import com.APIU.utils.StringTools;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 
 public class CommonfileController extends ABaseController{
@@ -22,6 +29,8 @@ public class CommonfileController extends ABaseController{
     private AppConfig appConfig;
     @Resource
     private FileInfoService fileInfoService;
+    @Resource
+    private RedisUtils redisUtils;
     protected void readimage(HttpServletResponse response, String imageFolder,
                    String imageName){
         if(StringTools.isEmpty(imageFolder) || StringUtils.isBlank(imageName)){
@@ -84,7 +93,7 @@ public class CommonfileController extends ABaseController{
         }
         readFile(response,file.getPath());
     }
-    ResponseVO getfildorinfo(String userid,String path){
+    protected ResponseVO getfildorinfo(String userid,String path){
         String[] filepath = path.split("/");
         FileInfoQuery query = new FileInfoQuery();
         query.setDelFlag(FileDelFlagEnums.USING.getFlag());
@@ -93,8 +102,38 @@ public class CommonfileController extends ABaseController{
         query.setFileidArray(filepath);
         List<FileInfo> fileInfo = fileInfoService.findListByParam(query);
         return getSuccessResponseVO(CopyTools.copyList(fileInfo, FileInfoVO.class));
-
-
+    }
+    protected ResponseVO createDownloadUrl(String userid , String fileid){
+        FileInfo fileInfo = fileInfoService.getFileInfoByFileIdAndUserId(fileid,userid);
+        if(fileInfo == null){
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        if(fileInfo.getFolderType().equals(FileFolderTypeEnums.FOLDER)){
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        DownloadFileDto downloadFileDto = new DownloadFileDto();
+        String code = StringTools.getRandomNumber(50);
+        downloadFileDto.setDownloadCode(code);
+        downloadFileDto.setFileName(fileInfo.getFileName());
+        downloadFileDto.setFilePath(fileInfo.getFilePath());
+        redisUtils.setex(code,downloadFileDto,Constants.REDIS_KEY_EXPIRES_DAY);
+        return getSuccessResponseVO(code);
+    }
+    protected void download(HttpServletResponse response , HttpServletRequest request, String code) throws UnsupportedEncodingException {
+        DownloadFileDto fileDto = (DownloadFileDto)redisUtils.get(code);
+        if(fileDto == null){
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        String downpath = appConfig.getProjectFolder() + Constants.FILE_FOLDER_FILE + fileDto.getFilePath();
+        String fileName = fileDto.getFileName();
+        response.setContentType("application/x-msdownload; charset=UTF-8");
+        if (request.getHeader("User-Agent").toLowerCase().indexOf("msie") > 0) {//IE浏览器
+            fileName = URLEncoder.encode(fileName, "UTF-8");
+        } else {
+            fileName = new String(fileName.getBytes("UTF-8"), "ISO8859-1");
+        }
+        response.setHeader("Content-Disposition", "attachment;filename=\"" + fileName + "\"");
+        readFile(response,downpath);
     }
 
 }

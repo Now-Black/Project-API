@@ -28,9 +28,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.PushBuilder;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 @RestController("fileInfoController")
@@ -120,6 +122,20 @@ public class FileController extends CommonfileController{
         SessionWebUserDto webUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
         fileInfoService.changeFileFolder(fileIds,filePid,webUserDto.getUserId());
         return getSuccessResponseVO(null);
+    }
+    @RequestMapping("/createDownloadUrl/{fileId}")
+    public ResponseVO createDownloadUrl(@PathVariable String fileId , HttpSession session){
+        SessionWebUserDto webUserDto  = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
+        return super.createDownloadUrl(webUserDto.getUserId(),fileId);
+    }
+    @RequestMapping("download/{code}")
+    public void download(HttpServletResponse response , HttpServletRequest request,@PathVariable String code) throws UnsupportedEncodingException {
+        super.download(response,request,code);
+    }
+    @RequestMapping("delFile")
+    public ResponseVO delFile(String fileid,HttpSession session){
+
+
     }
 
 }

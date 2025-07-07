@@ -22,6 +22,7 @@ import com.APIU.entity.dto.UserSpaceDto;
 import com.APIU.entity.enums.*;
 import com.APIU.entity.po.UserInfo;
 import com.APIU.entity.query.UserInfoQuery;
+import com.APIU.entity.vo.ResponseVO;
 import com.APIU.exception.BusinessException;
 import com.APIU.mappers.UserInfoMapper;
 import com.APIU.utils.DateUtil;
@@ -493,6 +494,9 @@ public class FileInfoServiceImpl implements FileInfoService {
 			}
 			fileInfoMapper.updateByFileIdAndUserId(fileInfo,cur.getFileId(),userid);
 		}
+	}
+	ResponseVO delFile(String userid, String fileid){
+
 	}
 
 }
