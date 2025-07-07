@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -456,6 +459,40 @@ public class FileInfoServiceImpl implements FileInfoService {
 		fileInfo.setLastUpdateTime(date);
 		return fileInfo;
 	}
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void changeFileFolder(String fileids , String filepid, String userid){
+		if(fileids.equals(filepid)){
+			throw new BusinessException(ResponseCodeEnum.CODE_600);
+		}
+		FileInfoQuery query = new FileInfoQuery();
+		if(!filepid.equals(Constants.ZERO_STR)){
+			query.setFilePid(filepid);
+			query.setUserId(userid);
+			Integer count = fileInfoService.findCountByParam(query);
+			if(count==0)throw new BusinessException(ResponseCodeEnum.CODE_600);
+		}
+		String[] filelist = fileids.split(",");
+		query = new FileInfoQuery();
+		query.setUserId(userid);
+		query.setFilePid(filepid);
+		query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+		List<FileInfo> fileInfos = fileInfoService.findListByParam(query);
+		Map<String , FileInfo> map = fileInfos.stream().collect(Collectors.toMap(FileInfo::getFileName, Function.identity(), (file1, file2) -> file2));
 
+		query = new FileInfoQuery();
+		query.setFileidArray(filelist);
+		query.setUserId(userid);
+		List<FileInfo> filetar= fileInfoService.findListByParam(query);
+		for(FileInfo cur : filetar){
+			FileInfo fileInfo = new FileInfo();
+			fileInfo.setFilePid(filepid);
+			if(map.containsKey(cur.getFileName())){
+				cur.setFileName(StringTools.rename(cur.getFileName()));
+				fileInfo.setFileName(cur.getFileName());
+			}
+			fileInfoMapper.updateByFileIdAndUserId(fileInfo,cur.getFileId(),userid);
+		}
+	}
 
 }

@@ -76,4 +76,5 @@ public interface FileInfoService {
 							   Integer chunkIndex, Integer chunks);
 	FileInfo newfolder(String userid , String foldername , String filepid);
 	FileInfo rename(String userid,String filename,String fileId);
+	void changeFileFolder(String fileids , String filepid, String userid);
 }

@@ -117,9 +117,9 @@ public class FileController extends CommonfileController{
     }
     @RequestMapping("changeFileFolder")
     public ResponseVO changeFileFolder(HttpSession session,String fileIds, String filePid){
-
-
-
-
+        SessionWebUserDto webUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
+        fileInfoService.changeFileFolder(fileIds,filePid,webUserDto.getUserId());
+        return getSuccessResponseVO(null);
     }
+
 }
