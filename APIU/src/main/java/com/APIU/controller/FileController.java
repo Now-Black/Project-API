@@ -11,16 +11,19 @@ import com.APIU.entity.enums.FileCategoryEnums;
 import com.APIU.entity.enums.FileDelFlagEnums;
 import com.APIU.entity.enums.FileFolderTypeEnums;
 import com.APIU.entity.po.FileInfo;
+import com.APIU.entity.po.UserInfo;
 import com.APIU.entity.query.FileInfoQuery;
 import com.APIU.entity.vo.FileInfoVO;
 import com.APIU.entity.vo.PaginationResultVO;
 import com.APIU.entity.vo.ResponseVO;
 import com.APIU.service.FileInfoService;
+import com.APIU.service.UserInfoService;
 import com.APIU.utils.CopyTools;
 import com.APIU.utils.StringTools;
 import io.netty.util.internal.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tomcat.util.bcel.Const;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,12 +41,15 @@ import java.util.List;
 @RestController("fileInfoController")
 @RequestMapping("/file")
 public class FileController extends CommonfileController{
-    @Resource
+    @Autowired
+    private UserInfoService userInfoService;
+    @Autowired
     private AppConfig appConfig;
-    @Resource
+    @Autowired
     private FileInfoService fileInfoService;
     @RequestMapping("/loadDataList")
     public ResponseVO loadDataList(HttpSession session , FileInfoQuery query,String category){
+
         FileCategoryEnums fileCategoryEnums = FileCategoryEnums.getByCode(category);
         if(fileCategoryEnums !=null){
             query.setFileCategory(fileCategoryEnums.getCategory());
@@ -133,9 +139,10 @@ public class FileController extends CommonfileController{
         super.download(response,request,code);
     }
     @RequestMapping("delFile")
-    public ResponseVO delFile(String fileid,HttpSession session){
-
-
+    public ResponseVO delFile(String fileids,HttpSession session){
+        SessionWebUserDto webUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
+        fileInfoService.delFile(fileids,webUserDto.getUserId());
+        return getSuccessResponseVO(null);
     }
 
 }

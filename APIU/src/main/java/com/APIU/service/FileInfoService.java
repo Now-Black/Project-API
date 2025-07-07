@@ -78,5 +78,6 @@ public interface FileInfoService {
 	FileInfo newfolder(String userid , String foldername , String filepid);
 	FileInfo rename(String userid,String filename,String fileId);
 	void changeFileFolder(String fileids , String filepid, String userid);
-	ResponseVO delFile(String userid,String fileid);
+
+	void delFile(String userid, String fileid);
 }

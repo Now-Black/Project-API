@@ -1,4 +1,5 @@
 package com.APIU.controller;
+import com.APIU.component.RedisUtils;
 import com.APIU.entity.enums.ResponseCodeEnum;
 import com.APIU.entity.vo.PaginationResultVO;
 import com.APIU.entity.vo.ResponseVO;
@@ -10,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 
 
-public class ABaseController {
+public class ABaseController{
 
     protected static final String STATUC_SUCCESS = "success";
 

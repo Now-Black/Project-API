@@ -119,7 +119,7 @@ public class CommonfileController extends ABaseController{
         redisUtils.setex(code,downloadFileDto,Constants.REDIS_KEY_EXPIRES_DAY);
         return getSuccessResponseVO(code);
     }
-    protected void download(HttpServletResponse response , HttpServletRequest request, String code) throws UnsupportedEncodingException {
+    void download(HttpServletResponse response , HttpServletRequest request, String code) throws UnsupportedEncodingException {
         DownloadFileDto fileDto = (DownloadFileDto)redisUtils.get(code);
         if(fileDto == null){
             throw new BusinessException(ResponseCodeEnum.CODE_600);

@@ -1,6 +1,9 @@
 package com.APIU.mappers;
 
+import com.APIU.entity.po.FileInfo;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * 文件信息 数据库操作接口
@@ -28,5 +31,10 @@ public interface FileInfoMapper<T,P> extends BaseMapper<T,P> {
 
 	void updateFileStatusWithOldStatus(@Param("fileId") String fileId, @Param("userId") String userId, @Param("bean") T t,
 									   @Param("oldStatus") Integer oldStatus);
+	void updateFileDelFlagBatch(@Param("bean") FileInfo fileInfo,
+								@Param("userId") String userId,
+								@Param("filePidList") List<String> filePidList,
+								@Param("fileIdList") List<String> fileIdList,
+								@Param("oldDelFlag") Integer oldDelFlag);
 
 }

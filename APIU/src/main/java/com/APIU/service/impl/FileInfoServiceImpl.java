@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -495,7 +493,47 @@ public class FileInfoServiceImpl implements FileInfoService {
 			fileInfoMapper.updateByFileIdAndUserId(fileInfo,cur.getFileId(),userid);
 		}
 	}
-	ResponseVO delFile(String userid, String fileid){
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void delFile(String userid, String fileid){
+		String[] fileids = fileid.split(",");
+		FileInfoQuery query = new FileInfoQuery();
+		query.setUserId(userid);
+		query.setFileidArray(fileids);
+		query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+		List<FileInfo> list = fileInfoService.findListByParam(query);
+		if(list == null){
+			throw new BusinessException(ResponseCodeEnum.CODE_600);
+		}
+		List<String> delfilefoldar= new ArrayList<>();
+		for(FileInfo file : list){
+			findallfiletar(delfilefoldar,userid,file.getFileId(),FileDelFlagEnums.USING.getFlag());
+		}
+		FileInfo fileInfo = new FileInfo();
+		if(delfilefoldar!=null){
+			fileInfo.setDelFlag(FileDelFlagEnums.DEL.getFlag());
+			fileInfoMapper.updateFileDelFlagBatch(fileInfo,userid,delfilefoldar,null,
+					FileDelFlagEnums.USING.getFlag());
+		}
+		delfilefoldar = Arrays.asList(fileids);
+		fileInfo = new FileInfo();
+		fileInfo.setRecoveryTime(new Date());
+		fileInfo.setDelFlag(FileDelFlagEnums.RECYCLE.getFlag());
+		fileInfoMapper.updateFileDelFlagBatch(fileInfo,userid,null,delfilefoldar,
+				FileDelFlagEnums.USING.getFlag());
+
+	}
+	private void findallfiletar(List<String> delfilefoldar , String userid , String fileid,Integer status){
+		delfilefoldar.add(fileid);
+		FileInfoQuery query = new FileInfoQuery();
+		query.setUserId(userid);
+		query.setDelFlag(status);
+		query.setFilePid(fileid);
+		query.setFolderType(FileFolderTypeEnums.FOLDER.getType());
+		List<FileInfo> list = fileInfoService.findListByParam(query);
+		for(FileInfo cur : list){
+			findallfiletar(delfilefoldar,userid, cur.getFileId(), status);
+		}
 
 	}
 
