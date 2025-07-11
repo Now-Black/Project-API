@@ -10,7 +10,8 @@ public class FileInfoVO {
     /**
      * 文件ID
      */
-    private String fileId;
+    protected String fileId;
+
 
     /**
      * 父级ID
