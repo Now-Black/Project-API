@@ -4,23 +4,10 @@
     <facet type="web" name="Web">
       <configuration>
         <webroots />
-        <sourceRoots />
       </configuration>
     </facet>
     <facet type="Spring" name="Spring">
       <configuration />
-    </facet>
-    <facet type="JRebel" name="JRebel">
-      <configuration>
-        <option name="ideModuleStorage">
-          <map>
-            <entry key="com.zeroturnaround.jrebel.FormatVersion" value="7.0.0" />
-            <entry key="jrebelEnabled" value="false" />
-            <entry key="lastExternalPluginCheckTime" value="1751367513485" />
-          </map>
-        </option>
-        <option name="version" value="4" />
-      </configuration>
     </facet>
   </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
