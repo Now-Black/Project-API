@@ -3,6 +3,7 @@ package com.APIU.utils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +12,11 @@ public class DateUtil {
 
     private static final Object lockObj = new Object();
     private static Map<String, ThreadLocal<SimpleDateFormat>> sdfMap = new HashMap<String, ThreadLocal<SimpleDateFormat>>();
-
+    public static Date getAfterDate(Integer day) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, day);
+        return calendar.getTime();
+    }
     private static SimpleDateFormat getSdf(final String pattern) {
         ThreadLocal<SimpleDateFormat> tl = sdfMap.get(pattern);
         if (tl == null) {

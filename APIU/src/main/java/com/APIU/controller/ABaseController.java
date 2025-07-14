@@ -20,7 +20,7 @@ public class ABaseController{
 
     protected static final String STATUC_ERROR = "error";
 
-    protected <T> ResponseVO getSuccessResponseVO(T t) {
+    <T> ResponseVO getSuccessResponseVO(T t) {
 
 
         ResponseVO<T> responseVO = new ResponseVO<>();

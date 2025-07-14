@@ -49,7 +49,6 @@ public class FileController extends CommonfileController{
     private FileInfoService fileInfoService;
     @RequestMapping("/loadDataList")
     public ResponseVO loadDataList(HttpSession session , FileInfoQuery query,String category){
-
         FileCategoryEnums fileCategoryEnums = FileCategoryEnums.getByCode(category);
         if(fileCategoryEnums !=null){
             query.setFileCategory(fileCategoryEnums.getCategory());

@@ -1,9 +1,14 @@
 package com.APIU.service.impl;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.APIU.entity.enums.ResponseCodeEnum;
+import com.APIU.entity.enums.ShareValidTypeEnums;
+import com.APIU.exception.BusinessException;
+import com.APIU.utils.DateUtil;
 import org.springframework.stereotype.Service;
 
 import com.APIU.entity.enums.PageSize;
@@ -14,6 +19,7 @@ import com.APIU.entity.query.SimplePage;
 import com.APIU.mappers.FileShareMapper;
 import com.APIU.service.FileShareService;
 import com.APIU.utils.StringTools;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -126,5 +132,24 @@ public class FileShareServiceImpl implements FileShareService {
 	@Override
 	public Integer deleteFileShareByShareId(String shareId) {
 		return this.fileShareMapper.deleteByShareId(shareId);
+	}
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void fileshare(FileShare fileShare){
+		ShareValidTypeEnums validTypeEnums = ShareValidTypeEnums.getByType(fileShare.getValidType()) ;
+		if(validTypeEnums == null){
+			throw new BusinessException(ResponseCodeEnum.CODE_404);
+		}
+		if(validTypeEnums!=ShareValidTypeEnums.FOREVER){
+			fileShare.setExpireTime(DateUtil.getAfterDate(validTypeEnums.getDays()));
+		}
+		if(fileShare.getCode()==null){
+			fileShare.setCode(StringTools.getRandomNumber(5));
+		}
+		fileShare.setShareId(StringTools.getRandomNumber(20));
+		Date date = new Date();
+		fileShare.setShareTime(date);
+		fileShareMapper.insert(fileShare);
 	}
 }

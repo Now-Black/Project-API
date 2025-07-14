@@ -68,5 +68,5 @@ public interface FileShareService {
 	 * 根据ShareId删除
 	 */
 	Integer deleteFileShareByShareId(String shareId);
-
+	void fileshare(FileShare fileShare);
 }
