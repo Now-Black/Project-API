@@ -389,4 +389,8 @@
 		select <include refid="base_column_list" /> from file_share f where share_id=#{shareId}
 	</select>
 
+	<delete id="deleteFileShareBatch">
+		delete from file_share where user_id = #{userId}
+		and share_id in(<foreach collection="shareIdArray" separator="," item="item">#{item}</foreach>)
+	</delete>
 </mapper>

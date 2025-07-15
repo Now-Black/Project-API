@@ -2,6 +2,7 @@ package com.APIU.service;
 
 import java.util.List;
 
+import com.APIU.entity.dto.SessionWebUserDto;
 import com.APIU.entity.query.FileShareQuery;
 import com.APIU.entity.po.FileShare;
 import com.APIU.entity.vo.PaginationResultVO;
@@ -69,4 +70,5 @@ public interface FileShareService {
 	 */
 	Integer deleteFileShareByShareId(String shareId);
 	void fileshare(FileShare fileShare);
+	void cancelShare(String fileids, String userid);
 }

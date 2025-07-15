@@ -11,6 +11,7 @@ import com.APIU.entity.query.SimplePage;
 import com.APIU.entity.vo.PaginationResultVO;
 import com.APIU.entity.vo.ResponseVO;
 import com.APIU.service.FileShareService;
+import org.apache.tomcat.util.bcel.Const;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -42,6 +43,12 @@ public class ShareController extends ABaseController{
         fileShare.setCode(code);
         fileShareService.fileshare(fileShare);
         return getSuccessResponseVO(fileShare);
+    }
+    @RequestMapping("cancelShare")
+    public ResponseVO cancelShare(HttpSession session , String shareIds){
+        SessionWebUserDto webUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
+        fileShareService.cancelShare(shareIds,webUserDto.getUserId());
+        return getSuccessResponseVO(null);
     }
 
 }

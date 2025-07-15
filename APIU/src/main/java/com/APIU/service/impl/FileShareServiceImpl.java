@@ -1,5 +1,6 @@
 package com.APIU.service.impl;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -152,4 +153,15 @@ public class FileShareServiceImpl implements FileShareService {
 		fileShare.setShareTime(date);
 		fileShareMapper.insert(fileShare);
 	}
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void cancelShare(String fileids, String userid){
+		String[] files = fileids.split(",");
+		Integer coutn = fileShareMapper.deleteFileShareBatch(files,userid);
+		if(coutn != files.length){
+			throw new BusinessException(ResponseCodeEnum.CODE_404);
+		}
+	}
+
+
 }
