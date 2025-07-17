@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.APIU.entity.dto.SessionShareDto;
 import com.APIU.entity.enums.ResponseCodeEnum;
 import com.APIU.entity.enums.ShareValidTypeEnums;
 import com.APIU.exception.BusinessException;
@@ -162,6 +163,25 @@ public class FileShareServiceImpl implements FileShareService {
 			throw new BusinessException(ResponseCodeEnum.CODE_404);
 		}
 	}
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public SessionShareDto checkShareCode(String code , String shareId){
+		FileShare fileShare = fileShareMapper.selectByShareId(shareId);
+		if(fileShare == null){
+			throw new BusinessException(ResponseCodeEnum.CODE_902.getMsg());
+		}
+		if(!fileShare.getCode().equals(code)){
+			throw new BusinessException("验证错误");
+		}
+		fileShareMapper.updateShareShowCount(shareId);
+		SessionShareDto shareDto = new SessionShareDto();
+		shareDto.setExpireTime(fileShare.getExpireTime());
+		shareDto.setFileId(fileShare.getFileId());
+		shareDto.setShareUserId(fileShare.getUserId());
+		shareDto.setShareId(fileShare.getShareId());
+		return shareDto;
+	}
+
 
 
 }
