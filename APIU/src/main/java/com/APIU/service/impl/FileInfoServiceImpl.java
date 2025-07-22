@@ -536,5 +536,29 @@ public class FileInfoServiceImpl implements FileInfoService {
 		}
 
 	}
+	@Override
+	public void checkRoot(String fileid , String userid , String filepid){
+		if(StringTools.isEmpty(fileid)){
+			throw new BusinessException(ResponseCodeEnum.CODE_600);
+		}
+		if(filepid.equals(fileid)){
+			return;
+		}
+		check_Root(fileid,userid,filepid);
+	}
+	private void check_Root(String fileid , String userid , String filepid){
+		FileInfo fileInfo = fileInfoMapper.selectByFileIdAndUserId(fileid,userid);
+		if(fileInfo == null){
+			throw new BusinessException(ResponseCodeEnum.CODE_600);
+		}
+		if(fileInfo.getFilePid().equals(Constants.ZERO_STR)){
+			throw new BusinessException(ResponseCodeEnum.CODE_600);
+		}
+		if(fileInfo.getFilePid().equals(filepid)){
+			return;
+		}
+
+		check_Root(fileInfo.getFilePid(),userid,filepid);
+	}
 
 }

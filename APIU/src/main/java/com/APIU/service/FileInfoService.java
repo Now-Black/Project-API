@@ -78,6 +78,6 @@ public interface FileInfoService {
 	FileInfo newfolder(String userid , String foldername , String filepid);
 	FileInfo rename(String userid,String filename,String fileId);
 	void changeFileFolder(String fileids , String filepid, String userid);
-
+	void checkRoot(String fileid , String userid , String filepid);
 	void delFile(String userid, String fileid);
 }

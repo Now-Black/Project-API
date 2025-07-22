@@ -1,13 +1,17 @@
 package com.APIU.controller;
 
 
+import com.APIU.annotation.GlobalInterceptor;
 import com.APIU.entity.constants.Constants;
 import com.APIU.entity.dto.SessionShareDto;
 import com.APIU.entity.dto.SessionWebUserDto;
+import com.APIU.entity.enums.FileDelFlagEnums;
 import com.APIU.entity.enums.ResponseCodeEnum;
 import com.APIU.entity.po.FileInfo;
 import com.APIU.entity.po.FileShare;
 import com.APIU.entity.po.UserInfo;
+import com.APIU.entity.query.FileInfoQuery;
+import com.APIU.entity.vo.PaginationResultVO;
 import com.APIU.entity.vo.ResponseVO;
 import com.APIU.entity.vo.ShareInfoVO;
 import com.APIU.exception.BusinessException;
@@ -69,13 +73,43 @@ public class WebShareController extends ABaseController{
     public ResponseVO getShareInfo(String shareId){
         return getSuccessResponseVO(getCommonShare(shareId));
     }
+
+    /**
+     *
+     * @param shareId
+     * @param code
+     * @param session
+     * @return
+     */
     @RequestMapping("checkShareCode")
     public ResponseVO checkShareCode(String shareId , String code , HttpSession session){
         SessionShareDto shareDto = fileShareService.checkShareCode(code,shareId);
         session.setAttribute(Constants.SESSION_SHARE_KEY + shareId , shareDto);
         return getSuccessResponseVO(null);
-
     }
 
+    /**
+     *
+     * @param shareId
+     * @param filePid
+     * @return
+     */
+    @RequestMapping("loadFileList")
+    @GlobalInterceptor(checklogin = false,checkParams = false)
+    public ResponseVO loadFileList(String shareId , String filePid , HttpSession session){
+        SessionShareDto shareDto = (SessionShareDto) session.getAttribute(Constants.SESSION_SHARE_KEY + shareId);
+        FileInfoQuery query = new FileInfoQuery();
+        if(filePid == null || filePid.equals(Constants.ZERO_STR)){
+            query.setFileId(shareDto.getFileId());
+        }else {
+            query.setFilePid(filePid);
+            fileInfoService.checkRoot(filePid,shareDto.getShareUserId(),shareDto.getFileId());
+        }
+        query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+        query.setOrderBy("last_update_time desc");
+        query.setUserId(shareDto.getShareUserId());
+        PaginationResultVO resultVO = fileInfoService.findListByPage(query);
+        return getSuccessResponseVO(convertoresultvo(resultVO,FileInfo.class));
+    }
 
 }
