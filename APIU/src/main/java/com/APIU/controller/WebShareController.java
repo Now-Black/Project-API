@@ -29,7 +29,7 @@ import javax.servlet.http.HttpSession;
 
 @RestController("webShareController")
 @RequestMapping("showShare")
-public class WebShareController extends ABaseController{
+public class WebShareController extends CommonfileController{
 
     @Resource
     private FileShareService fileShareService;
@@ -110,6 +110,20 @@ public class WebShareController extends ABaseController{
         query.setUserId(shareDto.getShareUserId());
         PaginationResultVO resultVO = fileInfoService.findListByPage(query);
         return getSuccessResponseVO(convertoresultvo(resultVO,FileInfo.class));
+    }
+
+    /**
+     *
+     * @param shareId
+     * @param path
+     * @param session
+     * @return
+     */
+    @RequestMapping("getFolderInfo")
+    public ResponseVO getFolderInfo(String shareId , String path,
+                                    HttpSession session){
+        SessionShareDto shareDto = (SessionShareDto) session.getAttribute(Constants.SESSION_SHARE_KEY + shareId);
+        return super.getfildorinfo(shareDto.getShareUserId(),path);
     }
 
 }

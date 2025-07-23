@@ -8,6 +8,7 @@ import com.APIU.entity.enums.*;
 import com.APIU.entity.po.FileInfo;
 import com.APIU.entity.query.FileInfoQuery;
 import com.APIU.entity.vo.FileInfoVO;
+import com.APIU.entity.vo.FolderVO;
 import com.APIU.entity.vo.ResponseVO;
 import com.APIU.exception.BusinessException;
 import com.APIU.service.FileInfoService;
@@ -17,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import javax.annotation.Resource;
+import javax.mail.Folder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -134,6 +136,19 @@ public class CommonfileController extends ABaseController{
         }
         response.setHeader("Content-Disposition", "attachment;filename=\"" + fileName + "\"");
         readFile(response,downpath);
+    }
+
+    protected ResponseVO getfolderinfo(String path , String userid){
+        String[] paths = path.split("/");
+        FileInfoQuery query = new FileInfoQuery();
+        query.setUserId(userid);
+        query.setFileidArray(paths);
+        query.setFileCategory(FileFolderTypeEnums.FOLDER.getType());
+        String orderBy = "field(file_id,\"" + StringUtils.join(paths, "\",\"") + "\")";
+        query.setOrderBy(orderBy);
+        List<FileInfo> list = fileInfoService.findListByParam(query);
+        return getSuccessResponseVO(CopyTools.copyList(list, FolderVO.class));
+
     }
 
 }
