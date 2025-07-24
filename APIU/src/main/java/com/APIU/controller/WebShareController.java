@@ -21,10 +21,14 @@ import com.APIU.service.UserInfoService;
 import com.APIU.utils.CopyTools;
 import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import org.omg.CORBA.PUBLIC_MEMBER;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.RequestDataValueProcessor;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 @RestController("webShareController")
@@ -126,4 +130,13 @@ public class WebShareController extends CommonfileController{
         return super.getfildorinfo(shareDto.getShareUserId(),path);
     }
 
+    /**
+     *
+     * @return
+     */
+    @RequestMapping("getFile/{shareId}/{fileId}")
+    public void getFile(HttpSession session, @PathVariable String shareId , @PathVariable String fileId, HttpServletResponse response){
+        SessionWebUserDto webUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_SHARE_KEY + shareId);
+        super.getfile(response,fileId, webUserDto.getUserId());
+    }
 }
